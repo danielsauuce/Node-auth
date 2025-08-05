@@ -1,9 +1,41 @@
-
-
+import jwt from "jsonwebtoken";
+import User from "../models/user.mjs";
+import bcrypt from "bcrypt";
 
 const registerUser = async (req, res) => {
   try {
-    const {} = req.body;
+    const { username, email, password, role } = req.body;
+
+    const existingUser = await User.findOne({ $or: [username, email] });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "User already exist, try a different username or email.",
+      });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    newUser = new User({
+      username,
+      email,
+      password: hashedPassword,
+      role: role,
+    });
+    await newUser.save();
+
+    if (newUser) {
+      return res.status(200).json({
+        success: true,
+        message: "User registered successfully",
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: "Unable to register user, please try again",
+      });
+    }
   } catch (error) {
     console.log(error);
     res.status(500).json({
@@ -15,6 +47,40 @@ const registerUser = async (req, res) => {
 
 const loginUser = async (req, res) => {
   try {
+    const { username, password } = req.body;
+
+    const existedUser = await User.findOne({ username });
+    if (!existedUser) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid User",
+      });
+    }
+
+    const isPasswordMatch = await bcrypt.compare(password, User.password);
+    if (!isPasswordMatch) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Credentials",
+      });
+    }
+
+    const accessToken = jwt.sign(
+      {
+        user_id: User.id,
+        username: User.username,
+        role: User.role,
+      },
+      process.env.JWT_SECERET_KEY,
+      { expiresIn: "15m" }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Login successful",
+      accessToken
+    });
+
   } catch (error) {
     console.log(error);
     res.status(500).json({
