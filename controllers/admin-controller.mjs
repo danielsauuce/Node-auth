@@ -1,6 +1,7 @@
 const adminController = (req, res) => {
+  const { username } = req.userInfo;
   res.json({
-    message: "welcome to admin page",
+    message: `Welcome back ${username}`,
   });
 };
 
