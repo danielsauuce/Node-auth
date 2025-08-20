@@ -6,7 +6,7 @@ const registerUser = async (req, res) => {
   try {
     const { username, email, password, role } = req.body;
 
-    const existingUser = await User.findOne({ $or: [username, email] });
+    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -17,7 +17,7 @@ const registerUser = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    newUser = new User({
+    const newUser = new User({
       username,
       email,
       password: hashedPassword,
@@ -53,11 +53,14 @@ const loginUser = async (req, res) => {
     if (!existedUser) {
       return res.status(400).json({
         success: false,
-        message: "Invalid User",
+        message: "Invalid Credentials",
       });
     }
 
-    const isPasswordMatch = await bcrypt.compare(password, User.password);
+    const isPasswordMatch = await bcrypt.compare(
+      password,
+      existedUser.password
+    );
     if (!isPasswordMatch) {
       return res.status(400).json({
         success: false,
@@ -67,20 +70,19 @@ const loginUser = async (req, res) => {
 
     const accessToken = jwt.sign(
       {
-        user_id: User.id,
-        username: User.username,
-        role: User.role,
+        user_id: existedUser._id,
+        username: existedUser.username,
+        role: existedUser.role,
       },
-      process.env.JWT_SECERET_KEY,
-      { expiresIn: "15m" }
+      process.env.JWT_SECRET_KEY,
+      { expiresIn: "30m" }
     );
 
     res.status(200).json({
       success: true,
       message: "Login successful",
-      accessToken
+      accessToken,
     });
-
   } catch (error) {
     console.log(error);
     res.status(500).json({
@@ -89,6 +91,7 @@ const loginUser = async (req, res) => {
     });
   }
 };
+
 
 const authControllers = { registerUser, loginUser };
 
