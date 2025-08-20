@@ -1,10 +1,10 @@
 const homeController = async (req, res) => {
-  const { username } = req.userinfo;
+  const { username, user_id, role } = req.userInfo;
   res.status(200).json({
     success: true,
     message: `Welcome ${username}`,
     user: {
-      _id: userid,
+      userId: user_id,
       username: username,
       role: role,
     },

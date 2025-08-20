@@ -1,6 +1,6 @@
-const isAdminUser = (req, res, next) => {
+const isAdminUserMiddleware = (req, res, next) => {
   if (req.userInfo.role !== "admin") {
-    return res.status.json({
+    return res.status(400).json({
       success: false,
       message: "Access denied, admin rights required",
     });
@@ -8,4 +8,4 @@ const isAdminUser = (req, res, next) => {
   next();
 };
 
-export default isAdminUser;
+export default isAdminUserMiddleware;
