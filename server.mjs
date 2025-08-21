@@ -6,6 +6,7 @@ import dbConnection from "./database/db.mjs";
 import authRoute from "./routes/auth-route.mjs";
 import homeRoute from "./routes/home-route.mjs";
 import adminRoute from "./routes/admin-route.mjs";
+import uploadImageRoute from "./routes/image-route.mjs";
 
 const app = express();
 const PORT = process.env.PORT;
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use("/auth", authRoute);
 app.use("/home", homeRoute);
 app.use("/auth", adminRoute);
+app.use("/image",uploadImageRoute);
 
 app.listen(PORT, () => {
   console.log(`Server is running on PORT ${PORT}`);

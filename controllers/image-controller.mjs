@@ -1,7 +1,8 @@
-import image from "../models/image.mjs";
+import Image from "../models/image.mjs";
 import uploadToCloudinary from "../helpers/cloudinaryHelpers.mjs";
+import cloudinary from "../config/cloudinary.mjs";
 
-const uploadImage = async (req, res) => {
+const uploadImageController = async (req, res) => {
   try {
     //check if file is missing
     if (!req.file) {
@@ -36,4 +37,63 @@ const uploadImage = async (req, res) => {
   }
 };
 
-export default uploadImage;
+const fetchImagesController = async (req, res) => {
+  try {
+    const images = await Image.find({});
+
+    if (images) {
+      res.status(200).json({
+        success: true,
+        data: images,
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      message: "Something went wrong! Please try again",
+    });
+  }
+};
+
+const deleteImagesController = async (req, res) => {
+  try {
+    const getCurrentImageIdToBeDeleted = req.params.id;
+    const userId = req.userInfo.userId;
+
+    const image = await Image.findByIdAndDelete(getCurrentImageIdToBeDeleted);
+    if (!image) {
+      return res.status(404).json({
+        success: false,
+        message: "Image not found",
+      });
+    }
+
+    //check if image is uploaded by the current user trying to delete image
+    if (image.uploadedBy.toString !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to delete this image",
+      });
+    }
+
+    // deleting image first from cloudinary storage
+    await cloudinary.uploader.destroy(image.publicId);
+
+    //delete from DB
+    await Image.findByIdAndDelete(getCurrentImageIdToBeDeleted);
+
+    res.status(200).json({
+      success: true,
+      message: "Image deleted successfully.",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      message: "Something went wrong! Please try again",
+    });
+  }
+};
+
+export { uploadImageController, fetchImagesController, deleteImagesController };
